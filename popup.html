@@ -24,7 +24,12 @@
       </button>
     </div>
 
-    <div id="main-view">
+
+<div id="main-view">
+    <div id="loader" class="loader-overlay">
+      <div class="loader"></div>
+    </div>
+    <div class="content-container">
       <h1 id="title" class="title">Loading...</h1>
       <div class="image-container fade-in">
         <img id="image" alt="Astronomy Picture of the Day" src="/api/placeholder/400/250">
@@ -33,11 +38,11 @@
         <p id="description">Loading amazing space content...</p>
       </div>
     </div>
+  </div>
 
     <div id="bookmarks-view" class="hidden">
       <h2 class="bookmarks-title">Your Bookmarked Images</h2>
       <div id="bookmarks-list" class="bookmarks-list">
-        <!-- Bookmarks will be inserted here -->
       </div>
     </div>
   </div>

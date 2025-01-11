@@ -5,30 +5,45 @@ let currentApodDate = '';
 let currentApodTitle = '';
 
 async function fetchAPOD(date = null) {
-  try {
-    const url = date 
-      ? `${NASA_APOD_URL}&date=${date}`
-      : NASA_APOD_URL;
+    const loader = document.getElementById('loader');
+    loader.style.display = 'flex';
     
-    const response = await fetch(url);
-    const data = await response.json();
-
-    currentApodDate = data.date;
-    currentApodTitle = data.title;
-    
-    document.getElementById("title").textContent = data.title;
-    document.getElementById("image").src = data.url;
-    document.getElementById("description").textContent = data.explanation;
-
-
-    const bookmarks = await getBookmarks();
-    updateBookmarkButton(bookmarks.some(bookmark => bookmark.date === currentApodDate));
-  } catch (error) {
-    console.error("Error fetching APOD:", error);
-    document.getElementById("description").textContent = 
-      "Unable to load APOD data. Please try again later.";
+    try {
+      const url = date 
+        ? `${NASA_APOD_URL}&date=${date}`
+        : NASA_APOD_URL;
+      
+      const response = await fetch(url);
+      const data = await response.json();
+  
+      currentApodDate = data.date;
+      currentApodTitle = data.title;
+      
+      const img = new Image();
+      img.src = data.url;
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        setTimeout(reject, 10000); 
+      });
+  
+      document.getElementById("title").textContent = data.title;
+      document.getElementById("image").src = data.url;
+      document.getElementById("description").textContent = data.explanation;
+ 
+      const bookmarks = await getBookmarks();
+      updateBookmarkButton(bookmarks.some(bookmark => bookmark.date === currentApodDate));
+    } catch (error) {
+      console.error("Error fetching APOD:", error);
+      document.getElementById("title").textContent = "Error Loading Content";
+      document.getElementById("image").src = "/api/placeholder/400/250";
+      document.getElementById("description").textContent = 
+        "Unable to load APOD data. Please try again later.";
+    } finally {
+      loader.style.display = 'none';
+    }
   }
-}
 
 async function getBookmarks() {
   const result = await chrome.storage.local.get('apodBookmarks');
@@ -70,7 +85,6 @@ function updateBookmarkButton(isBookmarked) {
   }
 }
 
-// Bookmarks list functionality
 async function renderBookmarksList() {
   const bookmarksList = document.getElementById('bookmarks-list');
   const bookmarks = await getBookmarks();

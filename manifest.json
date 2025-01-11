@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
-    "name": "Astronomy Pic + Space Weather",
+    "name": "APOD",
     "version": "1.0",
-    "description": "Displays the Astronomy Picture of the Day and space weather forecast when the first tab of the day is opened.",
+    "description": "Displays the Astronomy Picture of the Day when the first tab of the day is opened.",
     "permissions": ["storage", "activeTab", "scripting"],
     "background": {
       "service_worker": "background.js"
