@@ -1,8 +1,8 @@
 const NASA_API_KEY = "DEMO_KEY";
 const NASA_APOD_URL = `https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KEY}`;
-const SPACE_WEATHER_URL = "https://api.open-meteo.com/v1/space-weather?timezone=UTC&hourly=kp_index,solar_flare,aurora,solar_wind";
 
 let currentApodDate = '';
+let currentApodTitle = '';
 
 async function fetchAPOD(date = null) {
   try {
@@ -14,13 +14,15 @@ async function fetchAPOD(date = null) {
     const data = await response.json();
 
     currentApodDate = data.date;
+    currentApodTitle = data.title;
+    
     document.getElementById("title").textContent = data.title;
     document.getElementById("image").src = data.url;
     document.getElementById("description").textContent = data.explanation;
 
-    // Update bookmark button state
+
     const bookmarks = await getBookmarks();
-    updateBookmarkButton(bookmarks.includes(currentApodDate));
+    updateBookmarkButton(bookmarks.some(bookmark => bookmark.date === currentApodDate));
   } catch (error) {
     console.error("Error fetching APOD:", error);
     document.getElementById("description").textContent = 
@@ -28,25 +30,6 @@ async function fetchAPOD(date = null) {
   }
 }
 
-async function fetchSpaceWeather() {
-  try {
-    const response = await fetch(SPACE_WEATHER_URL);
-    const data = await response.json();
-    const { kp_index, solar_flare, aurora, solar_wind } = data.hourly;
-
-    document.getElementById("kp-index").textContent = kp_index[0];
-    document.getElementById("solar-flare").textContent = solar_flare[0];
-    document.getElementById("aurora").textContent = aurora[0];
-    document.getElementById("solar-wind").textContent = solar_wind[0];
-  } catch (error) {
-    console.error("Error fetching space weather data:", error);
-    document.querySelectorAll(".weather-value").forEach(el => {
-      el.textContent = "N/A";
-    });
-  }
-}
-
-// Bookmark functionality
 async function getBookmarks() {
   const result = await chrome.storage.local.get('apodBookmarks');
   return result.apodBookmarks || [];
@@ -54,16 +37,24 @@ async function getBookmarks() {
 
 async function toggleBookmark() {
   const bookmarks = await getBookmarks();
-  const index = bookmarks.indexOf(currentApodDate);
+  const index = bookmarks.findIndex(bookmark => bookmark.date === currentApodDate);
   
   if (index === -1) {
-    bookmarks.push(currentApodDate);
+    bookmarks.push({
+      date: currentApodDate,
+      title: currentApodTitle,
+      description: document.getElementById("description").textContent
+    });
   } else {
     bookmarks.splice(index, 1);
   }
 
   await chrome.storage.local.set({ apodBookmarks: bookmarks });
   updateBookmarkButton(index === -1);
+  
+  if (document.getElementById('bookmarks-view').classList.contains('active')) {
+    renderBookmarksList();
+  }
 }
 
 function updateBookmarkButton(isBookmarked) {
@@ -79,15 +70,81 @@ function updateBookmarkButton(isBookmarked) {
   }
 }
 
-// Initialize the popup
+// Bookmarks list functionality
+async function renderBookmarksList() {
+  const bookmarksList = document.getElementById('bookmarks-list');
+  const bookmarks = await getBookmarks();
+  
+  bookmarksList.innerHTML = bookmarks.length === 0 
+    ? '<p class="description-container">No bookmarks yet</p>'
+    : bookmarks.map(bookmark => `
+      <div class="bookmark-item" data-date="${bookmark.date}">
+        <div class="bookmark-date">${formatDate(bookmark.date)}</div>
+        <div class="bookmark-title">${bookmark.title}</div>
+        <div class="bookmark-description">${bookmark.description}</div>
+      </div>
+    `).join('');
+
+  document.querySelectorAll('.bookmark-item').forEach(item => {
+    item.addEventListener('click', () => {
+      fetchAPOD(item.dataset.date);
+      toggleView('main-view');
+    });
+  });
+}
+
+function formatDate(dateString) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function toggleView(viewId) {
+  const mainView = document.getElementById('main-view');
+  const bookmarksView = document.getElementById('bookmarks-view');
+  const bookmarksBtn = document.getElementById('bookmarks-list-btn');
+  
+  if (viewId === 'bookmarks-view') {
+    mainView.classList.add('hidden');
+    bookmarksView.classList.remove('hidden');
+    bookmarksView.classList.add('active');
+    bookmarksBtn.classList.add('active');
+    renderBookmarksList();
+  } else {
+    mainView.classList.remove('hidden');
+    bookmarksView.classList.add('hidden');
+    bookmarksView.classList.remove('active');
+    bookmarksBtn.classList.remove('active');
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Get date from URL if present
+
+  const dateInput = document.getElementById('date-search');
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.max = today;
+  
   const urlParams = new URLSearchParams(window.location.search);
   const date = urlParams.get('date');
   
+  if (date) {
+    dateInput.value = date;
+  }
+  
   fetchAPOD(date);
-  fetchSpaceWeather();
 
-  // Setup bookmark button
+
   document.getElementById('bookmark-btn').addEventListener('click', toggleBookmark);
+  document.getElementById('bookmarks-list-btn').addEventListener('click', () => {
+    toggleView('bookmarks-view');
+  });
+  document.getElementById('search-btn').addEventListener('click', () => {
+    const searchDate = dateInput.value;
+    if (searchDate) {
+      fetchAPOD(searchDate);
+      toggleView('main-view');
+    }
+  });
 });
