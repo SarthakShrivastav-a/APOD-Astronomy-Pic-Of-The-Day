@@ -4,9 +4,15 @@ const NASA_APOD_URL = `https://api.nasa.gov/planetary/apod?api_key=${NASA_API_KE
 let currentApodDate = '';
 let currentApodTitle = '';
 
+
 async function fetchAPOD(date = null) {
     const loader = document.getElementById('loader');
-    loader.style.display = 'flex';
+    const image = document.getElementById('image');
+    const contentContainer = document.querySelector('.content-container');
+    
+    loader.classList.add('visible');
+    image.classList.add('loading');
+    contentContainer.classList.add('loading');
     
     try {
       const url = date 
@@ -19,21 +25,29 @@ async function fetchAPOD(date = null) {
       currentApodDate = data.date;
       currentApodTitle = data.title;
       
+
       const img = new Image();
-      img.src = data.url;
       
       await new Promise((resolve, reject) => {
         img.onload = resolve;
         img.onerror = reject;
-        setTimeout(reject, 10000); 
+        img.src = data.url;
+
+        setTimeout(reject, 10000);
       });
-  
+
       document.getElementById("title").textContent = data.title;
-      document.getElementById("image").src = data.url;
       document.getElementById("description").textContent = data.explanation;
- 
+      image.src = data.url;
+
       const bookmarks = await getBookmarks();
       updateBookmarkButton(bookmarks.some(bookmark => bookmark.date === currentApodDate));
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      image.classList.remove('loading');
+      contentContainer.classList.remove('loading');
+      
     } catch (error) {
       console.error("Error fetching APOD:", error);
       document.getElementById("title").textContent = "Error Loading Content";
@@ -41,9 +55,15 @@ async function fetchAPOD(date = null) {
       document.getElementById("description").textContent = 
         "Unable to load APOD data. Please try again later.";
     } finally {
-      loader.style.display = 'none';
+      setTimeout(() => {
+        loader.classList.remove('visible');
+      }, 300);
     }
   }
+
+  document.getElementById('image').addEventListener('load', function() {
+    this.classList.remove('loading');
+  });
 
 async function getBookmarks() {
   const result = await chrome.storage.local.get('apodBookmarks');
