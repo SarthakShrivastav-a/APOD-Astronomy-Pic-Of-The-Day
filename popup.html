@@ -3,47 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>APOD + Space Weather</title>
+  <title>APOD Explorer</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div id="content">
     <div class="header">
-      <h1 id="title" class="title">Loading...</h1>
-      <button id="bookmark-btn" class="bookmark-btn">
+      <div class="search-container">
+        <input type="date" id="date-search" class="date-input">
+        <button id="search-btn" class="search-btn">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+      <button id="bookmarks-list-btn" class="nav-btn">
+        <i class="fas fa-list"></i>
+      </button>
+      <button id="bookmark-btn" class="nav-btn">
         <i class="far fa-star"></i>
       </button>
     </div>
-    
-    <div class="image-container fade-in">
-      <img id="image" alt="Astronomy Picture of the Day" src="/api/placeholder/400/250">
+
+    <div id="main-view">
+      <h1 id="title" class="title">Loading...</h1>
+      <div class="image-container fade-in">
+        <img id="image" alt="Astronomy Picture of the Day" src="/api/placeholder/400/250">
+      </div>
+      <div class="description-container fade-in">
+        <p id="description">Loading amazing space content...</p>
+      </div>
     </div>
 
-    <div class="description-container fade-in">
-      <p id="description">Loading amazing space content...</p>
-    </div>
-
-    <div class="space-weather fade-in">
-      <div class="weather-card">
-        <i class="fas fa-sun weather-icon"></i>
-        <span class="weather-label">KP Index</span>
-        <span id="kp-index" class="weather-value">-</span>
-      </div>
-      <div class="weather-card">
-        <i class="fas fa-fire weather-icon"></i>
-        <span class="weather-label">Solar Flare</span>
-        <span id="solar-flare" class="weather-value">-</span>
-      </div>
-      <div class="weather-card">
-        <i class="fas fa-meteor weather-icon"></i>
-        <span class="weather-label">Aurora Activity</span>
-        <span id="aurora" class="weather-value">-</span>
-      </div>
-      <div class="weather-card">
-        <i class="fas fa-wind weather-icon"></i>
-        <span class="weather-label">Solar Wind</span>
-        <span id="solar-wind" class="weather-value">-</span>
+    <div id="bookmarks-view" class="hidden">
+      <h2 class="bookmarks-title">Your Bookmarked Images</h2>
+      <div id="bookmarks-list" class="bookmarks-list">
+        <!-- Bookmarks will be inserted here -->
       </div>
     </div>
   </div>
